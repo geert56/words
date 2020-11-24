@@ -1,3 +1,5 @@
+/* Copyright (c) 2020 Geert Janssen, MIT License */
+
 /* Generate all words composable from a given a set of letters and their
    multiplicity (number of available individuals) up to using all letters.
    Optionally there is also a minimum word length (greater than the default

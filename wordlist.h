@@ -1,3 +1,5 @@
+/* Copyright (c) 2020 Geert Janssen, MIT License */
+
 /* Lists of 3-10 character length English words. */
 static const char *wordlist_03[] = {
 "ABE",
