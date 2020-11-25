@@ -181,7 +181,8 @@ int main(int argc, char *argv[])
 {
   if (argc < 2) {
     fputs(
-    "Usage: wow letters [ template | min [ max ]]\n\n"
+    "Usage: wow letters [ template | min [ max ]]\n"
+    "   or: wow template\n\n"
     "Generate words from a given set of letters and their multiplicity.\n"
     "The first argument is a string of at least 3 letters where multiplicity\n"
     "is indicated by repeating the letters that may be used more than once.\n"
@@ -217,7 +218,7 @@ int main(int argc, char *argv[])
       }
       letters[27] = '\0';
       num_letters = 26;
-      len = 26*MAX_WORD_LEN;
+      len = MAX_WORD_LEN;
       goto treat_as_pattern;
     }
   }
