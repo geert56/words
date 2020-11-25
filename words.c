@@ -122,8 +122,8 @@ static int lookup(const char *word, unsigned len)
 static void iterate(unsigned len, char build[], unsigned pos)
 {
   if (pos == len) {
-    build[pos] = '\0';
     /* match against vocabulary: */
+    build[pos] = '\0';
     if (lookup(build, len)) {
       fputs(build, stdout);
       fputc('\n', stdout);
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
     return 2;
   }
   if (len > MAX_WORD_LEN) {
-    fprintf(stderr, "(E) Too many enough letters; allow at most %u\n",
+    fprintf(stderr, "(E) Too many letters; allow at most %u\n",
 	    MAX_WORD_LEN);
     return 3;
   }
