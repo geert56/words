@@ -107,12 +107,28 @@ static int lookup(const char *word, unsigned len)
 {
   /* Get the list of words of length len: */
   const char **wl = wordlist[len-MIN_WORD_LEN];
-  /* Since words are stored sorted, could use binary search. */
-  /*unsigned len = sizeof(wl)/sizeof(wl[0]) - 1/ *trailing 0* /;*/
+#if 1
+  /* Since words are stored sorted, using binary search. */
+  int i = 0, j = wordlist_len[len-MIN_WORD_LEN];
+
+  /* Binary search: */
+  while (i < j) {
+    int k = (i + j) >> 1 /* / 2 */;
+    int cmp = strcmp(word, wl[k]);
+    if (!cmp)
+      return 1;
+    if (cmp < 0)
+      j = k;
+    else
+      i = k + 1;
+  }
+#else
+  /* slower linear search */
   unsigned i;
   for (i = 0; wl[i]; i++)
     if (!strcmp(wl[i], word))
       return 1;
+#endif
   return 0;
 }
 
@@ -288,8 +304,7 @@ int main(int argc, char *argv[])
 	else
 	  pattern[i] = '.';
       }
-      min_word_len = pattern_len;
-      max_word_len = min_word_len;
+      max_word_len = min_word_len = pattern_len;
     }
   }
 
