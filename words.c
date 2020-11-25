@@ -137,8 +137,18 @@ static int lookup(const char *word, unsigned len)
 */
 static void iterate(unsigned len, char build[], unsigned pos)
 {
+  /* Check if constructed word of required length: */
   if (pos == len) {
-    /* match against vocabulary: */
+#if 0
+    /* Match against pattern, if any: */
+    if (pattern_len) {
+      unsigned k;
+      for (k = 0; k < pos; k++)
+	if (pattern[k] != '.' && pattern[k] != build[k])
+	  return;
+    }
+#endif
+    /* Match against vocabulary: */
     build[pos] = '\0';
     if (lookup(build, len)) {
       fputs(build, stdout);
@@ -146,28 +156,32 @@ static void iterate(unsigned len, char build[], unsigned pos)
     }
     return;
   }
+  /* Here: pos < len; not done yet; need more letters appended. */
 
   char next;
+#if 1
   /* See if pattern decides next letter: */
   if (pattern_len && (next = pattern[pos]) != '.') {
-    unsigned i = next - 'A';
+    /* letter at this pos is prescribed: must be next. */
+    unsigned apos = next - 'A';
     /* Are there any of this letter still available? */
-    if (!howmany[i]) return;
+    if (!howmany[apos]) return;
     build[pos] = next;
     /* Exclude it from subsequent picks: */
-    howmany[i]--;
+    howmany[apos]--;
     iterate(len, build, pos+1);
     /* Restore availability: */
-    howmany[i]++;
+    howmany[apos]++;
     return;
   }
-
+#endif
   /* Consider all letters as the next letter: */
   unsigned i;
   for (i = 0; i < num_letters; i++) {
-    /* Are there any of this letter still available? */
-    if (!howmany[i]) continue;
     next = letters[i];
+    unsigned apos = next-'A';
+    /* Are there any of this letter still available? */
+    if (!howmany[apos]) continue;
 
     /* check whether next makes sense as first letter: */
     if (pos == 0 && strchr(unlikely_first, next)) continue;
@@ -178,10 +192,10 @@ static void iterate(unsigned len, char build[], unsigned pos)
 
     build[pos] = next;
     /* Exclude it from subsequent picks: */
-    howmany[i]--;
+    howmany[apos]--;
     iterate(len, build, pos+1);
     /* Restore availability: */
-    howmany[i]++;
+    howmany[apos]++;
   }
 }
 
@@ -236,15 +250,14 @@ int main(int argc, char *argv[])
   for (i = 0; i < len; i++) {
     if (!isalpha(input[i])) {
       full_alphabet = 1;
-      /* treat as pattern with full alphabet and unrestricted multi. */
+      /* Treat as pattern with full alphabet and unrestricted multi. */
       pattern = input;
-      for (i = 0; i < 26; i++) {
-	letters[i] = i+'A';
-	howmany[i] = MAX_WORD_LEN;
+      /* All letters available in plenty multiplicity: */
+      for (num_letters = 0; num_letters < 26; num_letters++) {
+	letters[num_letters] = num_letters+'A';
+	howmany[num_letters] = MAX_WORD_LEN;
       }
-      letters[27] = '\0';
-      num_letters = 26;
-      len = MAX_WORD_LEN;
+      letters[num_letters] = '\0';
       goto treat_as_pattern;
     }
   }
@@ -322,24 +335,22 @@ int main(int argc, char *argv[])
   }
 
   if (!full_alphabet) {
-    /* make multiplicity explicit: */
-    unsigned multi[26] = {0};
+    /* Make multiplicity explicit: */
     unsigned i;
     for (i = 0; i < len; i++) {
       char ch = toupper(input[i]);
-      multi[ch-'A']++;
+      howmany[ch-'A']++;
     }
-    /* sort letters: */
+    /* Sort letters: */
     for (i = 0; i < 26; i++)
-      if (multi[i])
+      if (howmany[i])
 	letters[num_letters++] = i+'A';
     letters[num_letters] = '\0';
 
     fprintf(stderr, "Set of %u letters (multiplicity): ", num_letters);
     for (i = 0; i < num_letters; i++) {
       char ch = letters[i];
-      howmany[i] = multi[ch-'A'];
-      fprintf(stderr, "%c(%u)", ch, howmany[i]);
+      fprintf(stderr, "%c(%u)", ch, howmany[ch-'A']);
     }
     fputc('\n', stderr);
   }
