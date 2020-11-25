@@ -97,11 +97,11 @@ static unsigned min_word_len;
 #define MAX_WORD_LEN 10
 static unsigned max_word_len;
 /* Available letters (A-Z) and their multiplicity; any order. */
-static char letters[MAX_WORD_LEN+1];   /* distinct, sorted upper-case letters */
+static char letters[26+1];	       /* distinct, sorted upper-case letters */
 static char *pattern;		       /* upper-case letters or . */
 static unsigned pattern_len;	       /* length of pattern */
 static unsigned num_letters;	       /* number of letters in letters[] */
-static unsigned howmany[MAX_WORD_LEN]; /* multiplicity of each letter */
+static unsigned howmany[26];	       /* multiplicity of each letter */
 
 static int lookup(const char *word, unsigned len)
 {
@@ -202,6 +202,26 @@ int main(int argc, char *argv[])
   }
   char *input = argv[1];
   unsigned len = strlen(input);
+
+  /* if contains a non-alpha assume it's a pattern and accept no more args */
+  unsigned i;
+  int full_alphabet = 0;
+  for (i = 0; i < len; i++) {
+    if (!isalpha(input[i])) {
+      full_alphabet = 1;
+      /* treat as pattern with full alphabet and unrestricted multi. */
+      pattern = input;
+      for (i = 0; i < 26; i++) {
+	letters[i] = i+'A';
+	howmany[i] = MAX_WORD_LEN;
+      }
+      letters[27] = '\0';
+      num_letters = 26;
+      len = 26*MAX_WORD_LEN;
+      goto treat_as_pattern;
+    }
+  }
+
   if (len < MIN_WORD_LEN) {
     fprintf(stderr, "(E) Not enough letters; need at least %u\n",
 	    MIN_WORD_LEN);
@@ -243,6 +263,7 @@ int main(int argc, char *argv[])
     }
     else { /* assume pattern */
       pattern = argv[2];
+    treat_as_pattern:
       pattern_len = strlen(pattern);
       if (pattern_len < MIN_WORD_LEN || pattern_len > len) {
 	fprintf(stderr, "(E) Expect pattern length >= %u and <= %u\n",
@@ -261,25 +282,30 @@ int main(int argc, char *argv[])
     }
   }
 
-  /* make multiplicity explicit: */
-  unsigned multi[26] = {0};
-  unsigned i;
-  for (i = 0; i < len; i++) {
-    char ch = toupper(input[i]);
-    multi[ch-'A']++;
+  if (!full_alphabet) {
+    /* make multiplicity explicit: */
+    unsigned multi[26] = {0};
+    unsigned i;
+    for (i = 0; i < len; i++) {
+      char ch = toupper(input[i]);
+      multi[ch-'A']++;
+    }
+    /* sort letters: */
+    for (i = 0; i < 26; i++)
+      if (multi[i])
+	letters[num_letters++] = i+'A';
+    letters[num_letters] = '\0';
+
+    fprintf(stderr, "Set of %u letters (multiplicity): ", num_letters);
+    for (i = 0; i < num_letters; i++) {
+      char ch = letters[i];
+      howmany[i] = multi[ch-'A'];
+      fprintf(stderr, "%c(%u)", ch, howmany[i]);
+    }
+    fputc('\n', stderr);
   }
-  /* sort letters: */
-  for (i = 0; i < 26; i++)
-    if (multi[i])
-      letters[num_letters++] = i+'A';
-  letters[num_letters] = '\0';
-  fprintf(stderr, "Set of %u letters (multiplicity): ", num_letters);
-  for (i = 0; i < num_letters; i++) {
-    char ch = letters[i];
-    howmany[i] = multi[ch-'A'];
-    fprintf(stderr, "%c(%u)", ch, howmany[i]);
-  }
-  fputc('\n', stderr);
+  else
+    fprintf(stderr, "Set of letters A-Z with unrestricted multiplicity\n");
 
   if (pattern_len) {
     /* check if pattern letters are in letters: */
