@@ -2,17 +2,11 @@
 
 /* Generate all words composable from a given a set of letters and their
    multiplicity (number of available individuals) up to using all letters.
-   Optionally there is also a minimum word length (greater than the default
-   length 1 letter).
+   Generated words can be restricted by length or a pattern.
 
-   Use letter bigram frequency tables to construct feasible words:
-
-   First letter: check whether it can be the start of a word.
-   Last letter: check whether it can be the ending of a word.
-   Any other letter: check whether the previous letter and this letter
-   can occur in a word.
-
-   For each feasible word, check against a dictionary.
+   Uses letter bigram frequency tables to avoid `impossible words' and
+   a large >50,000 word vocabulary of word length 2 through 12 to ensure
+   correct words.
 */
 
 #include <assert.h>
