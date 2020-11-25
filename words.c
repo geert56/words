@@ -21,7 +21,7 @@
 #include <string.h>
 #include <ctype.h>
 
-/* defines wordlist a vocabulary of 3-10 char words: */
+/* defines wordlist a vocabulary of MIN_WORD_LEN-MAX_WORD_LEN char words: */
 #include "wordlist.h"
 
 /* Unlikely first letters of a word: */
@@ -92,9 +92,9 @@ static const char *unlikely_combos[] = {
   /*Z*/ "BCDFGHJKLMNPQRSTUVWXYZ"
 };
 
-#define MIN_WORD_LEN 3
+#define MIN_WORD_LEN 2
 static unsigned min_word_len;
-#define MAX_WORD_LEN 10
+#define MAX_WORD_LEN 12
 static unsigned max_word_len;
 /* Available letters (A-Z) and their multiplicity; any order. */
 static char letters[26+1];	       /* distinct, sorted upper-case letters */
@@ -198,7 +198,7 @@ unsigned words(void)
 }
 
 /* 1: set of letters (multiplicity indicated by repetition)
-   2: optional, a) minimum length of words to compose, default 3
+   2: optional, a) minimum length of words to compose, default MIN_WORD_LEN
       or b) known letters in some positions
    3. optional, maximum word length, default use all available letters
       only for case 2a.
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
     "Usage: wow letters [ template | min [ max ]]\n"
     "   or: wow template\n\n"
     "Generate words from a given set of letters and their multiplicity.\n"
-    "The first argument is a string of at least 3 letters where multiplicity\n"
+    "The first argument is a string of at least 2 letters where multiplicity\n"
     "is indicated by repeating the letters that may be used more than once.\n"
     "For instance 'APORRATL' specifies 6 distinct letters of which both\n"
     "A and R may occur twice in any generated word.\n"
@@ -222,12 +222,12 @@ int main(int argc, char *argv[])
     "are expected to occur at the same positions in the generated words.\n"
     "Any character but a letter is interpreted as a wildcard.\n"
     "Example: wow 'APORRATL' 'P...A.' generates the word PORTAL.\n\n"
-    "The minimum word length is 3 letters; the maximum is 10.\n"
-    "The program uses a vocabulary of 46756 English words.\n"
+    "The minimum word length is 2 letters; the maximum is 12.\n"
+    "The program uses a vocabulary of about 50,000 English words.\n"
     , stderr);
     return 1;
   }
-  char *input = argv[1];
+  char *input = argv[1]; /* no length bound! */
   unsigned len = strlen(input);
 
   /* if contains a non-alpha assume it's a pattern and accept no more args */
@@ -248,22 +248,18 @@ int main(int argc, char *argv[])
       goto treat_as_pattern;
     }
   }
+  /* Here: all input chars alphabetic. */
 
   if (len < MIN_WORD_LEN) {
     fprintf(stderr, "(E) Not enough letters; need at least %u\n",
 	    MIN_WORD_LEN);
     return 2;
   }
-  if (len > MAX_WORD_LEN) {
-    fprintf(stderr, "(E) Too many letters; allow at most %u\n",
-	    MAX_WORD_LEN);
-    return 3;
-  }
   pattern = NULL;
   pattern_len = 0;
   /* len >= MIN_WORD_LEN */
   min_word_len = MIN_WORD_LEN;
-  max_word_len = len;
+  max_word_len = MAX_WORD_LEN;
   /* max_word_len >= min_word_len */
   if (argc > 2) {
     if (isdigit(argv[2][0])) {
@@ -273,29 +269,46 @@ int main(int argc, char *argv[])
 		min_word_len, MIN_WORD_LEN);
 	min_word_len = MIN_WORD_LEN;
       }
+      else
+      if (min_word_len > MAX_WORD_LEN) {
+	fprintf(stderr, "(W) minimum word length (%u) too large; set to %u\n",
+		min_word_len, MAX_WORD_LEN);
+	min_word_len = MAX_WORD_LEN;
+      }
+      /* Here: MIN_WORD_LEN <= min_word_len <= MAX_WORD_LEN */
+
       if (argc > 3) {
 	max_word_len = atoi(argv[3]);
-	if (max_word_len > len) {
+	if (max_word_len > MAX_WORD_LEN) {
 	  fprintf(stderr, "(W) maximum word length (%u) too large; set to %u\n",
-		  max_word_len, len);
-	  max_word_len = len;
+		  max_word_len, MAX_WORD_LEN);
+	  max_word_len = MAX_WORD_LEN;
 	}
-	if (min_word_len > max_word_len) {
+	else
+	if (max_word_len < MIN_WORD_LEN) {
+	  fprintf(stderr, "(W) maximum word length (%u) too small; set to %u\n",
+		  max_word_len, MIN_WORD_LEN);
+	  max_word_len = MIN_WORD_LEN;
+	}
+	/* Here: MIN_WORD_LEN <= max_word_len <= MAX_WORD_LEN */
+
+	if (max_word_len < min_word_len) {
 	  fprintf(stderr,
 	  "(W) maximum word length (%u) must not be less than minimum (%u)\n",
 		  max_word_len, min_word_len);
 	  max_word_len = min_word_len;
 	}
       }
+      /*else min_word_len <= max_word_len */
     }
     else { /* assume pattern */
       pattern = argv[2];
     treat_as_pattern:
       pattern_len = strlen(pattern);
-      if (pattern_len < MIN_WORD_LEN || pattern_len > len) {
+      if (pattern_len < MIN_WORD_LEN || pattern_len > MAX_WORD_LEN) {
 	fprintf(stderr, "(E) Expect pattern length >= %u and <= %u\n",
-		MIN_WORD_LEN, len);
-	return 4;
+		MIN_WORD_LEN, MAX_WORD_LEN);
+	return 3;
       }
       unsigned i;
       for (i = 0; i < pattern_len; i++) {
@@ -339,7 +352,7 @@ int main(int argc, char *argv[])
       if (pattern[i] != '.' && !strchr(letters, pattern[i])) {
 	fprintf(stderr, "(E) Pattern letter %c not in letter set\n",
 		pattern[i]);
-	return 5;
+	return 4;
       }
     }
     fprintf(stderr, "Generate words that match pattern: %s\n", pattern);
