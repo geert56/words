@@ -1,6 +1,9 @@
 /* Copyright (c) 2020 Geert Janssen, MIT License */
 
-/* Lists of 3-10 character length English words. */
+/* Separate lists for the 3 through 10 character length English words.
+   Each list ends with a 0 to ease the termination of a linear search.
+*/
+
 static const char *wordlist_03[] = {
 "ABE",
 "ABY",
@@ -46773,6 +46776,18 @@ static const char *wordlist_10[] = {
 "ZOOLOGICAL",
 "ZOOLOGISTS",
 0 };
+
+/* wordlist lengths */
+static unsigned wordlist_len[] = {
+  sizeof(wordlist_03)/sizeof(char *)-1,
+  sizeof(wordlist_04)/sizeof(char *)-1,
+  sizeof(wordlist_05)/sizeof(char *)-1,
+  sizeof(wordlist_06)/sizeof(char *)-1,
+  sizeof(wordlist_07)/sizeof(char *)-1,
+  sizeof(wordlist_08)/sizeof(char *)-1,
+  sizeof(wordlist_09)/sizeof(char *)-1,
+  sizeof(wordlist_10)/sizeof(char *)-1
+};
 
 /* 2-dimensional array of strings; unequal length rows! */
 static const char **wordlist[] = {
