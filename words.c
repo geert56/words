@@ -122,13 +122,6 @@ static int lookup(const char *word, unsigned len)
 static void iterate(unsigned len, char build[], unsigned pos)
 {
   if (pos == len) {
-    /* match against pattern: */
-    if (pattern_len) {
-      unsigned i;
-      for (i = 0; i < pattern_len; i++)
-	if (pattern[i] != '.' && pattern[i] != build[i])
-	  return;
-    }
     build[pos] = '\0';
     /* match against vocabulary: */
     if (lookup(build, len)) {
@@ -143,19 +136,27 @@ static void iterate(unsigned len, char build[], unsigned pos)
   for (i = 0; i < num_letters; i++) {
     /* Are there any of this letter still available? */
     if (!howmany[i]) continue;
-    char next = letters[i];
-    /* check whether next makes sense as first letter: */
-    if (pos == 0 && strchr(unlikely_first, next)) continue;
-    /* check whether next makes sense as last letter: */
-    if (pos == len-1 && strchr(unlikely_last, next)) continue;
-    /* check whether build[pos-1] and next are likely: */
-    if (pos > 0 && strchr(unlikely_combos[build[pos-1]-'A'], next)) continue;
+
+    char next;
+    /* See if pattern decides next letter: */
+    if (!pattern_len || (next = pattern[pos]) == '.') {
+      next = letters[i];
+
+      /* check whether next makes sense as first letter: */
+      if (pos == 0 && strchr(unlikely_first, next)) continue;
+      /* check whether next makes sense as last letter: */
+      if (pos == len-1 && strchr(unlikely_last, next)) continue;
+      /* check whether build[pos-1] and next are likely: */
+      if (pos > 0 && strchr(unlikely_combos[build[pos-1]-'A'], next)) continue;
+    }
     build[pos] = next;
     /* Exclude it from subsequent picks: */
     howmany[i]--;
     iterate(len, build, pos+1);
     /* Restore availability: */
     howmany[i]++;
+
+    if (pattern_len && pattern[pos] != '.') break;
   }
 }
 
