@@ -131,32 +131,41 @@ static void iterate(unsigned len, char build[], unsigned pos)
     return;
   }
 
-  /* Consider all letters as the next letter: */
-  unsigned i;
-  for (i = 0; i < num_letters; i++) {
+  char next;
+  /* See if pattern decides next letter: */
+  if (pattern_len && (next = pattern[pos]) != '.') {
+    unsigned i = next - 'A';
     /* Are there any of this letter still available? */
-    if (!howmany[i]) continue;
-
-    char next;
-    /* See if pattern decides next letter: */
-    if (!pattern_len || (next = pattern[pos]) == '.') {
-      next = letters[i];
-
-      /* check whether next makes sense as first letter: */
-      if (pos == 0 && strchr(unlikely_first, next)) continue;
-      /* check whether next makes sense as last letter: */
-      if (pos == len-1 && strchr(unlikely_last, next)) continue;
-      /* check whether build[pos-1] and next are likely: */
-      if (pos > 0 && strchr(unlikely_combos[build[pos-1]-'A'], next)) continue;
-    }
+    if (!howmany[i]) return;
     build[pos] = next;
     /* Exclude it from subsequent picks: */
     howmany[i]--;
     iterate(len, build, pos+1);
     /* Restore availability: */
     howmany[i]++;
+    return;
+  }
 
-    if (pattern_len && pattern[pos] != '.') break;
+  /* Consider all letters as the next letter: */
+  unsigned i;
+  for (i = 0; i < num_letters; i++) {
+    /* Are there any of this letter still available? */
+    if (!howmany[i]) continue;
+    next = letters[i];
+
+    /* check whether next makes sense as first letter: */
+    if (pos == 0 && strchr(unlikely_first, next)) continue;
+    /* check whether next makes sense as last letter: */
+    if (pos == len-1 && strchr(unlikely_last, next)) continue;
+    /* check whether build[pos-1] and next are likely: */
+    if (pos > 0 && strchr(unlikely_combos[build[pos-1]-'A'], next)) continue;
+
+    build[pos] = next;
+    /* Exclude it from subsequent picks: */
+    howmany[i]--;
+    iterate(len, build, pos+1);
+    /* Restore availability: */
+    howmany[i]++;
   }
 }
 
