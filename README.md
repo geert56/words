@@ -43,6 +43,7 @@ Generate words that match pattern: .H
 AH
 EH
 OH
+
 $ ./words 'abcdef' '..a.'
 Set of 6 letters (multiplicity): A(1)B(1)C(1)D(1)E(1)F(1)
 Generate words that match pattern: ..A.
@@ -53,7 +54,8 @@ Set of 4 letters (multiplicity): E(3)S(1)X(1)Y(1)
 Generate words that match pattern: ....
 EXES
 EYES
-./words 'eeexys' 3
+
+$ ./words 'eeexys' 3
 Set of 4 letters (multiplicity): E(3)S(1)X(1)Y(1)
 Generate words of lengths >= 3 and <= 12
 EYE
