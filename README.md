@@ -16,8 +16,8 @@ Build an executable with `cc words.c` (or use `make`) and run it without cmdline
 
 ```console
 $ ./words
-Usage: wow letters [ template | min [ max ]]
-   or: wow template
+Usage: words letters [ template | min [ max ]]
+   or: words template
 
 Generate words from a given set of letters and their multiplicity.
 The first argument is a string of at least 2 letters where multiplicity
